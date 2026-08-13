@@ -5,8 +5,8 @@
     "details": {
       "context_length": null,
       "data_retention_modes": [
-        "default",
         "provider_data_share",
+        "default",
         "none"
       ],
       "model_name": "mistral.ministral-3-8b-instruct",
@@ -28,6 +28,7 @@
     },
     "provider_display_name": "Amazon Bedrock",
     "service_type": "llm",
-    "status": "ready"
+    "status": "ready",
+    "supports_tools": true
   }
 }

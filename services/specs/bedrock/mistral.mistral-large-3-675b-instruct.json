@@ -5,8 +5,8 @@
     "details": {
       "context_length": null,
       "data_retention_modes": [
-        "default",
         "none",
+        "default",
         "provider_data_share"
       ],
       "model_name": "mistral.mistral-large-3-675b-instruct",
@@ -28,6 +28,7 @@
     },
     "provider_display_name": "Amazon Bedrock",
     "service_type": "llm",
-    "status": "ready"
+    "status": "ready",
+    "supports_tools": true
   }
 }

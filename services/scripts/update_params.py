@@ -20,6 +20,25 @@ for the translated Anthropic dialect), which is exactly the mantle chat path.
 The ``/v1/models`` catalog returns neither pricing nor context length, so those
 are left unknown (``null``); enrich later from a maintained table if needed.
 
+**Availability is probed, not read from the catalog.** ``GET /v1/models`` marks
+*every* model ``available`` regardless of account entitlement or which API it
+supports, so trusting it publishes services the gateway can't serve (they 400
+and get rejected). The catalog carries NO api/endpoint/SDK-compatibility field
+(only ``status``/``owned_by``/``data_retention``), so three live probes decide
+what to publish, per model:
+
+  1. ``GET /v1/models/{id}`` -- the DETAIL status is authoritative for account
+     access (``unavailable`` + a ``status_reason`` for models the account can't
+     invoke; the list endpoint hides this). Drops e.g. all ``anthropic.*`` and
+     the unreleased ``openai.gpt-5.x`` on an account without access.
+  2. ``POST /v1/chat/completions`` (1 token) -- confirms the model is reachable
+     on the OpenAI Chat Completions route. A ``available`` model can still be
+     Converse/InvokeModel-only ("isn't supported on this route"), e.g.
+     ``google.gemma-4-*`` / ``xai.grok-*``; those are dropped too.
+  3. ``POST /v1/chat/completions`` with a ``tools`` param -- sets
+     ``supports_tools`` so the listing template only ships the function-calling
+     example for models that actually accept tools (others 400/500 on it).
+
 Usage: AWS_BEARER_TOKEN_BEDROCK=... python scripts/update_params.py
 """
 
@@ -51,24 +70,106 @@ def _display_name(model_id: str) -> str:
     return model_id.replace(".", " ").replace("-", " ").replace("_", " ").title()
 
 
-def iter_models(api_key: str) -> Iterator[dict]:
-    """Yield one template-variable dict per available Bedrock (mantle) model."""
+# A one-token chat request proves the model serves the OpenAI Chat Completions
+# route; a single ``get_weather`` tool proves it accepts the ``tools`` param.
+_PING = [{"role": "user", "content": "ping"}]
+_TOOL = [
+    {
+        "type": "function",
+        "function": {
+            "name": "get_weather",
+            "description": "Get the current weather for a city",
+            "parameters": {
+                "type": "object",
+                "properties": {"city": {"type": "string"}},
+                "required": ["city"],
+            },
+        },
+    }
+]
+
+
+def _detail_available(client: httpx.Client, model_id: str) -> tuple[bool, str]:
+    """Authoritative per-account availability via ``GET /v1/models/{id}``.
+
+    The list endpoint marks every model ``available``; the detail endpoint is the
+    one that returns ``unavailable`` + a ``status_reason`` for models the account
+    cannot invoke (no entitlement / unreleased). Returns (available, reason)."""
+    try:
+        r = client.get(f"{MODELS_URL}/{model_id}")
+    except httpx.HTTPError as exc:
+        return False, f"detail request failed: {exc}"
+    if r.status_code != 200:
+        return False, f"detail HTTP {r.status_code}"
+    body = r.json()
+    if body.get("status") == "available":
+        return True, "available"
+    return False, body.get("status_reason") or f"status={body.get('status')}"
+
+
+def _chat_ok(client: httpx.Client, model_id: str, *, tools: bool) -> tuple[bool, str]:
+    """POST a minimal chat completion; True iff the model serves it on the OpenAI
+    route without error.
+
+    Without ``tools`` this is the route probe — an ``available`` model can still
+    be Converse/InvokeModel-only ("isn't supported on this route"). With ``tools``
+    it doubles as the tool-support probe: we only care that the ``tools`` param is
+    ACCEPTED (200), not that a call is emitted, so models that 400/500 on tools
+    are reported unsupported. Returns (ok, detail)."""
+    payload: dict = {"model": model_id, "messages": _PING, "max_tokens": 1}
+    if tools:
+        payload["max_tokens"] = 16  # headroom so a tool call isn't truncated pre-emit
+        payload["tools"] = _TOOL
+    # Reasoning models (e.g. kimi-k2-thinking) can burn seconds of thinking before
+    # the first output token even at max_tokens=1, so a single tight timeout would
+    # false-drop a servable model. Give it room and retry once before giving up.
+    r = None
+    for attempt in (1, 2):
+        try:
+            r = client.post(f"{API_BASE_URL}/v1/chat/completions", json=payload, timeout=90.0)
+            break
+        except httpx.TimeoutException:
+            if attempt == 2:
+                return False, "chat request timed out twice"
+        except httpx.HTTPError as exc:
+            return False, f"chat request failed: {exc}"
+    assert r is not None
+    if r.status_code == 200 and "choices" in r.json():
+        return True, "ok"
+    try:
+        msg = r.json().get("error", {}).get("message", "") or r.text
+    except ValueError:
+        msg = r.text
+    return False, f"HTTP {r.status_code}: {msg[:80]}"
+
+
+def iter_models(client: httpx.Client) -> Iterator[dict]:
+    """Yield one template-variable dict per model the account can actually serve
+    on the OpenAI Chat Completions route (see the module docstring for probes)."""
     print(f"Fetching models from {PROVIDER_DISPLAY_NAME} ({MODELS_URL})...")
-    r = httpx.get(MODELS_URL, headers={"Authorization": f"Bearer {api_key}"}, timeout=30.0)
+    r = client.get(MODELS_URL)
     r.raise_for_status()
     models = r.json().get("data", [])
-    print(f"Found {len(models)} models\n")
+    print(f"Found {len(models)} catalog models; probing availability + route\n")
 
+    kept = 0
     for i, m in enumerate(models, 1):
         model_id = m.get("id", "")
         if not model_id:
             continue
-        status = m.get("status")
-        print(f"[{i}/{len(models)}] {model_id} ({status})")
-        # Skip models the account can't invoke (access not granted / retired).
-        if status != "available":
-            print("  Skipped: not available")
+        print(f"[{i}/{len(models)}] {model_id}")
+
+        available, reason = _detail_available(client, model_id)
+        if not available:
+            print(f"  skip (unavailable): {reason}")
             continue
+        route_ok, reason = _chat_ok(client, model_id, tools=False)
+        if not route_ok:
+            print(f"  skip (not on OpenAI chat route): {reason}")
+            continue
+        supports_tools, _ = _chat_ok(client, model_id, tools=True)
+        kept += 1
+        print(f"  keep (tools={'yes' if supports_tools else 'no'})")
 
         display_name = _display_name(model_id)
         # Canonical (snake_case) metadata the platform validator requires for LLM
@@ -100,6 +201,9 @@ def iter_models(api_key: str) -> Iterator[dict]:
             "service_type": "llm",
             "status": "ready",
             "details": details,
+            # Gates the function-calling example in the listing template — models
+            # that reject the ``tools`` param would otherwise fail that one doc.
+            "supports_tools": supports_tools,
             "payout_price": pricing,
             # Listing / channel fields
             "list_price": pricing,
@@ -107,7 +211,34 @@ def iter_models(api_key: str) -> Iterator[dict]:
             "api_base_url": API_BASE_URL,
             "env_api_key_name": ENV_API_KEY_NAME,
         }
-        print("  OK")
+    print(f"\nKept {kept}/{len(models)} servable models")
+
+
+def _prune_dropped(specs_dir: Path, kept_ids: set[str]) -> None:
+    """Delete param files (+ ``.service.json`` sidecars) for models no longer in
+    the servable set.
+
+    ``write_params_from_iterator(prune_missing=True)`` prunes expanded *folders*,
+    not param *files*, so a model that drops off the servable set would otherwise
+    linger and keep getting uploaded and rejected. We enumerate the models
+    ourselves here, so prune against that set explicitly."""
+    if not specs_dir.is_dir():
+        return
+    removed = 0
+    for param in sorted(specs_dir.glob("*.json")):
+        if param.name.endswith(".service.json"):
+            continue
+        model_id = param.stem  # "<model_id>.json" -> "<model_id>"
+        if model_id in kept_ids:
+            continue
+        param.unlink()
+        sidecar = specs_dir / f"{model_id}.service.json"
+        if sidecar.exists():
+            sidecar.unlink()
+        removed += 1
+        print(f"  pruned dropped model: {model_id}")
+    if removed:
+        print(f"Pruned {removed} dropped model param file(s)")
 
 
 def main() -> None:
@@ -116,10 +247,22 @@ def main() -> None:
         print(f"Error: {ENV_API_KEY_NAME} not set")
         sys.exit(1)
 
-    stats = write_params_from_iterator(
-        iterator=iter_models(api_key),
-        output_dir=SCRIPT_DIR.parent / "specs",
-    )
+    specs_dir = SCRIPT_DIR.parent / "specs"
+    kept_ids: set[str] = set()
+
+    def _tracking(client: httpx.Client) -> Iterator[dict]:
+        for params in iter_models(client):
+            kept_ids.add(params["offering_name"])
+            yield params
+
+    with httpx.Client(
+        headers={"Authorization": f"Bearer {api_key}"}, timeout=30.0
+    ) as client:
+        stats = write_params_from_iterator(
+            iterator=_tracking(client),
+            output_dir=specs_dir,
+        )
+        _prune_dropped(specs_dir / PROVIDER_NAME, kept_ids)
     print(f"\nDone: {stats}")
 
 
