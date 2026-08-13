@@ -38,6 +38,7 @@
       "request_transformer": {
         "llm_translator": "anthropic_to_openai"
       },
+      "request_formats": ["openai", "anthropic"],
       "sort_order": 1
     },
 {#- Native Bedrock runtime channel (unitysvc/unitysvc#1786): Converse and
@@ -55,8 +56,9 @@
       "access_method": "http",
       "base_url": "https://bedrock-runtime.us-east-1.amazonaws.com",
       "api_key": "${ customer_secrets.{{ env_api_key_name }} }",
-      "description": "Native Bedrock runtime (Converse / InvokeModel, including the streaming variants) with your Amazon Bedrock API key. Point boto3 at the gateway with endpoint_url set to this service's URL plus '@converse'; the /model/{modelId}/... path passes through unchanged.",
+      "description": "Native Bedrock runtime (Converse / InvokeModel, including the streaming variants) with your Amazon Bedrock API key. Point boto3 at the gateway with endpoint_url set to this service's URL; the /model/{modelId}/... path passes through unchanged and the gateway routes Converse/Invoke-shaped requests to this channel automatically (or pin '@converse' explicitly).",
       "rate_limits": [],
+      "request_formats": ["bedrock_converse", "bedrock_invoke"],
       "sort_order": 2
     }
   }
