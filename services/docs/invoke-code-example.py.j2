@@ -1,5 +1,4 @@
-"""Call {{ routing_key.model if routing_key is defined else model_id }} with
-boto3 invoke_model() through the UnitySVC gateway.
+"""Call this model with boto3 invoke_model() through the UnitySVC gateway.
 
 InvokeModel uses the SAME endpoint and authentication as Converse — only the
 request body differs: it is the PROVIDER'S native format, not the unified
@@ -14,19 +13,28 @@ import os
 
 import boto3
 
+service_url = "{{ service_base_url }}"
+if "/model/" in service_url:
+    endpoint_url, model_id = service_url.split("/model/", 1)
+else:
+    # Shared provider path: the URL has no model segment; the gateway routes
+    # by the model id in the request path instead.
+    endpoint_url = service_url
+    model_id = "{{ routing_key.model if routing_key is defined else '' }}"
+
 {% if local_testing %}
 # Local testing: call the Bedrock runtime directly, authenticating with the
 # Amazon Bedrock API key (sent by boto3 as a bearer token).
 os.environ["AWS_BEARER_TOKEN_BEDROCK"] = os.environ["UNITYSVC_API_KEY"]
 client = boto3.client(
     "bedrock-runtime",
-    endpoint_url="{{ service_base_url }}",
+    endpoint_url=endpoint_url,
     region_name="us-east-1",
 )
 {% else %}
 client = boto3.client(
     "bedrock-runtime",
-    endpoint_url="{{ service_base_url }}",
+    endpoint_url=endpoint_url,
     aws_access_key_id=os.environ["UNITYSVC_API_KEY"],
     aws_secret_access_key="not-used",  # placeholder; the gateway ignores it
     region_name="us-east-1",
@@ -40,7 +48,7 @@ body = {
 }
 
 response = client.invoke_model(
-    modelId="{{ routing_key.model if routing_key is defined else model_id }}",
+    modelId=model_id,
     body=json.dumps(body),
     contentType="application/json",
 )

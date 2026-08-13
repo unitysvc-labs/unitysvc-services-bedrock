@@ -12,6 +12,18 @@
       "access_method": "http",
       "base_url": "${API_GATEWAY_BASE_URL}/{{ provider_name }}",
       "routing_key": {"model": "{{ offering_name }}"}
+    },
+{#- Native Bedrock runtime interface (unitysvc/unitysvc#1786): the model id
+    is IN THE URL, so the request path alone locates the service — a direct
+    database match, no routing key. Deliberately a distinct first segment
+    ("{{ provider_name }}-runtime", NOT nested under /{{ provider_name }}):
+    a nested path would prefix-match the shared interface too and trip the
+    resolver's cross-service ambiguity backstop / double-candidate suffix
+    hazard. boto3 usage: endpoint_url = ${API_GATEWAY_BASE_URL}/{{ provider_name }}-runtime
+    and the SDK itself appends /model/<modelId>/converse|invoke. #}
+    "converse_api": {
+      "access_method": "http",
+      "base_url": "${API_GATEWAY_BASE_URL}/{{ provider_name }}-runtime/model/{{ offering_name }}"
     }
   },
 {#- Preset overrides (meta etc.) must be NESTED inside the sentinel value —
