@@ -1,0 +1,33 @@
+{
+  "parameters": {
+    "api_base_url": "https://bedrock-mantle.us-east-1.api.aws",
+    "description": "Google Gemma 3 4B It served through Amazon Bedrock",
+    "details": {
+      "context_length": null,
+      "data_retention_modes": [
+        "none",
+        "default",
+        "provider_data_share"
+      ],
+      "model_name": "google.gemma-3-4b-it",
+      "owned_by": "system",
+      "parameter_count": null
+    },
+    "display_name": "Google Gemma 3 4B It",
+    "env_api_key_name": "AWS_BEARER_TOKEN_BEDROCK",
+    "list_price": {
+      "description": "Free (BYOK)",
+      "price": "0",
+      "type": "constant"
+    },
+    "offering_name": "google.gemma-3-4b-it",
+    "payout_price": {
+      "description": "Free (BYOK)",
+      "price": "0",
+      "type": "constant"
+    },
+    "provider_display_name": "Amazon Bedrock",
+    "service_type": "llm",
+    "status": "ready"
+  }
+}

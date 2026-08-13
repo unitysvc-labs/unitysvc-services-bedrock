@@ -1,0 +1,33 @@
+{
+  "parameters": {
+    "api_base_url": "https://bedrock-mantle.us-east-1.api.aws",
+    "description": "Mistral Voxtral Small 24B 2507 served through Amazon Bedrock",
+    "details": {
+      "context_length": null,
+      "data_retention_modes": [
+        "provider_data_share",
+        "none",
+        "default"
+      ],
+      "model_name": "mistral.voxtral-small-24b-2507",
+      "owned_by": "system",
+      "parameter_count": null
+    },
+    "display_name": "Mistral Voxtral Small 24B 2507",
+    "env_api_key_name": "AWS_BEARER_TOKEN_BEDROCK",
+    "list_price": {
+      "description": "Free (BYOK)",
+      "price": "0",
+      "type": "constant"
+    },
+    "offering_name": "mistral.voxtral-small-24b-2507",
+    "payout_price": {
+      "description": "Free (BYOK)",
+      "price": "0",
+      "type": "constant"
+    },
+    "provider_display_name": "Amazon Bedrock",
+    "service_type": "llm",
+    "status": "ready"
+  }
+}

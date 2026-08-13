@@ -1,0 +1,33 @@
+{
+  "parameters": {
+    "api_base_url": "https://bedrock-mantle.us-east-1.api.aws",
+    "description": "Qwen Qwen3 Coder 480B A35B Instruct served through Amazon Bedrock",
+    "details": {
+      "context_length": null,
+      "data_retention_modes": [
+        "default",
+        "provider_data_share",
+        "none"
+      ],
+      "model_name": "qwen.qwen3-coder-480b-a35b-instruct",
+      "owned_by": "system",
+      "parameter_count": null
+    },
+    "display_name": "Qwen Qwen3 Coder 480B A35B Instruct",
+    "env_api_key_name": "AWS_BEARER_TOKEN_BEDROCK",
+    "list_price": {
+      "description": "Free (BYOK)",
+      "price": "0",
+      "type": "constant"
+    },
+    "offering_name": "qwen.qwen3-coder-480b-a35b-instruct",
+    "payout_price": {
+      "description": "Free (BYOK)",
+      "price": "0",
+      "type": "constant"
+    },
+    "provider_display_name": "Amazon Bedrock",
+    "service_type": "llm",
+    "status": "ready"
+  }
+}
