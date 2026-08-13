@@ -26,15 +26,14 @@ else:
     model_id = "{{ routing_key.model if routing_key is defined else '' }}"
 
 {% if local_testing %}
-# Local testing: call the Bedrock runtime directly, signing with the real
-# AWS IAM access keys resolved from the channel (exported by run-tests as
-# the uppercased channel fields).
+# Local testing: call the Bedrock runtime directly. boto3's default
+# credential chain picks up AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY from
+# the environment (run-tests inherits the shell that sourced
+# seller.secrets.txt), so no explicit credentials are needed here.
 client = boto3.client(
     "bedrock-runtime",
     endpoint_url=endpoint_url,
-    aws_access_key_id=os.environ["ACCESS_KEY"],
-    aws_secret_access_key=os.environ["SECRET_KEY"],
-    region_name=os.environ.get("REGION", "us-east-1"),
+    region_name="{{ region | default('us-east-1') }}",
 )
 {% else %}
 client = boto3.client(
