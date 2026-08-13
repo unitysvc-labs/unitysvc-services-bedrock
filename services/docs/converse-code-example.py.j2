@@ -1,5 +1,5 @@
-"""Call {{ routing_key.model }} with the native AWS SDK (boto3) Converse API
-through the UnitySVC gateway.
+"""Call {{ routing_key.model if routing_key is defined else model_id }} with
+the native AWS SDK (boto3) Converse API through the UnitySVC gateway.
 
 boto3 signs the request with SigV4 as usual — use your UnitySVC API key as
 the access key id and any placeholder as the secret. The gateway
@@ -33,7 +33,7 @@ client = boto3.client(
 {% endif %}
 
 response = client.converse(
-    modelId="{{ routing_key.model }}",
+    modelId="{{ routing_key.model if routing_key is defined else model_id }}",
     messages=[{"role": "user", "content": [{"text": "Reply with the single word: pong"}]}],
     inferenceConfig={"maxTokens": 16},
 )

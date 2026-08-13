@@ -1,5 +1,5 @@
-"""Call {{ routing_key.model }} with boto3 invoke_model() through the
-UnitySVC gateway.
+"""Call {{ routing_key.model if routing_key is defined else model_id }} with
+boto3 invoke_model() through the UnitySVC gateway.
 
 InvokeModel uses the SAME endpoint and authentication as Converse — only the
 request body differs: it is the PROVIDER'S native format, not the unified
@@ -40,7 +40,7 @@ body = {
 }
 
 response = client.invoke_model(
-    modelId="{{ routing_key.model }}",
+    modelId="{{ routing_key.model if routing_key is defined else model_id }}",
     body=json.dumps(body),
     contentType="application/json",
 )

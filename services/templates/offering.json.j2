@@ -49,13 +49,18 @@
     and a placeholder secret (default-credential boto3, needs unitysvc#1787).
     No routing_key: the model rides in the request PATH
     (/model/{modelId}/converse), which the gateway extracts, and a body
-    injection would corrupt the Converse schema. No llm_translator: the body
-    passes through opaquely. Pin with @converse until channel selection is
+    injection would corrupt the Converse schema. model_id is the doc-render
+    substitute: channel-context document rendering flattens channel fields
+    (no routing_key here), so code examples read
+    "routing_key.model if defined else model_id"; the gateway treats it as an
+    inert connection field. No llm_translator: the body passes through
+    opaquely. Pin with @converse until channel selection is
     request-shape-aware: endpoint_url=".../{{ provider_name | default('bedrock') }}@converse". #}
     "converse": {
       "access_method": "http",
       "base_url": "https://bedrock-runtime.us-east-1.amazonaws.com",
       "api_key": "${ customer_secrets.{{ env_api_key_name }} }",
+      "model_id": "{{ offering_name }}",
       "description": "Native Bedrock runtime (Converse / InvokeModel, including the streaming variants) with your Amazon Bedrock API key. Point boto3 at the gateway with endpoint_url set to this service's URL; the /model/{modelId}/... path passes through unchanged and the gateway routes Converse/Invoke-shaped requests to this channel automatically (or pin '@converse' explicitly).",
       "rate_limits": [],
       "request_formats": ["bedrock_converse", "bedrock_invoke"],
