@@ -1,0 +1,42 @@
+"""Call {{ routing_key.model }} with the native AWS SDK (boto3) Converse API
+through the UnitySVC gateway.
+
+boto3 signs the request with SigV4 as usual — use your UnitySVC API key as
+the access key id and any placeholder as the secret. The gateway
+authenticates the key itself (the signature is not part of the trust model)
+and re-authenticates upstream with the service's stored credentials, so the
+default AWS credential chain, streaming (converse_stream) and InvokeModel
+all work unchanged.
+"""
+
+import os
+
+import boto3
+
+{% if local_testing %}
+# Local testing: call the Bedrock runtime directly, authenticating with the
+# Amazon Bedrock API key (sent by boto3 as a bearer token).
+os.environ["AWS_BEARER_TOKEN_BEDROCK"] = os.environ["UNITYSVC_API_KEY"]
+client = boto3.client(
+    "bedrock-runtime",
+    endpoint_url="{{ service_base_url }}",
+    region_name="us-east-1",
+)
+{% else %}
+client = boto3.client(
+    "bedrock-runtime",
+    endpoint_url="{{ service_base_url }}",
+    aws_access_key_id=os.environ["UNITYSVC_API_KEY"],
+    aws_secret_access_key="not-used",  # placeholder; the gateway ignores it
+    region_name="us-east-1",
+)
+{% endif %}
+
+response = client.converse(
+    modelId="{{ routing_key.model }}",
+    messages=[{"role": "user", "content": [{"text": "Reply with the single word: pong"}]}],
+    inferenceConfig={"maxTokens": 16},
+)
+
+print(response["output"]["message"]["content"][0]["text"])
+print("connectivity ok")

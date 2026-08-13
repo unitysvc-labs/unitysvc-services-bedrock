@@ -1,0 +1,48 @@
+"""Call {{ routing_key.model }} with boto3 invoke_model() through the
+UnitySVC gateway.
+
+InvokeModel uses the SAME endpoint and authentication as Converse — only the
+request body differs: it is the PROVIDER'S native format, not the unified
+Converse schema. The body below is the Anthropic Messages shape used by
+anthropic.* model ids; adjust it for your model family (see the provider's
+Bedrock documentation for the native request schema of each model).
+invoke_model_with_response_stream() works the same way.
+"""
+
+import json
+import os
+
+import boto3
+
+{% if local_testing %}
+# Local testing: call the Bedrock runtime directly, authenticating with the
+# Amazon Bedrock API key (sent by boto3 as a bearer token).
+os.environ["AWS_BEARER_TOKEN_BEDROCK"] = os.environ["UNITYSVC_API_KEY"]
+client = boto3.client(
+    "bedrock-runtime",
+    endpoint_url="{{ service_base_url }}",
+    region_name="us-east-1",
+)
+{% else %}
+client = boto3.client(
+    "bedrock-runtime",
+    endpoint_url="{{ service_base_url }}",
+    aws_access_key_id=os.environ["UNITYSVC_API_KEY"],
+    aws_secret_access_key="not-used",  # placeholder; the gateway ignores it
+    region_name="us-east-1",
+)
+{% endif %}
+
+body = {
+    "anthropic_version": "bedrock-2023-05-31",
+    "max_tokens": 16,
+    "messages": [{"role": "user", "content": "Reply with the single word: pong"}],
+}
+
+response = client.invoke_model(
+    modelId="{{ routing_key.model }}",
+    body=json.dumps(body),
+    contentType="application/json",
+)
+
+print(json.loads(response["body"].read()))
