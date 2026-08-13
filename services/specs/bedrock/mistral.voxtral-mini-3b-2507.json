@@ -5,9 +5,9 @@
     "details": {
       "context_length": null,
       "data_retention_modes": [
-        "default",
+        "provider_data_share",
         "none",
-        "provider_data_share"
+        "default"
       ],
       "model_name": "mistral.voxtral-mini-3b-2507",
       "owned_by": "system",
@@ -28,6 +28,7 @@
     },
     "provider_display_name": "Amazon Bedrock",
     "service_type": "llm",
-    "status": "ready"
+    "status": "ready",
+    "supports_tools": true
   }
 }

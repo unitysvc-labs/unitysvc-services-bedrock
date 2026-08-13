@@ -27,9 +27,13 @@
     "cURL code example (Anthropic-style input)": {
       "$doc_preset": "llm_code_example_anthropic_to_openai_shell", "meta": {"sleep_after_test": 5}
     },
+{#- Only models that accept the OpenAI ``tools`` param get the function-calling
+    example; others 400/500 on it (probed by update_params.py -> supports_tools). #}
+{%- if supports_tools | default(false) %}
     "Python function calling code example": {
       "$doc_preset": "llm_code_example_fc_requests", "meta": {"sleep_after_test": 5}
     },
+{%- endif %}
     "JavaScript code example": {
       "$doc_preset": "llm_code_example_javascript", "meta": {"sleep_after_test": 5}
     },

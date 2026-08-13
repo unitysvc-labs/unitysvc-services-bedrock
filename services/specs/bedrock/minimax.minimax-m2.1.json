@@ -5,9 +5,9 @@
     "details": {
       "context_length": null,
       "data_retention_modes": [
+        "provider_data_share",
         "none",
-        "default",
-        "provider_data_share"
+        "default"
       ],
       "model_name": "minimax.minimax-m2.1",
       "owned_by": "system",
@@ -28,6 +28,7 @@
     },
     "provider_display_name": "Amazon Bedrock",
     "service_type": "llm",
-    "status": "ready"
+    "status": "ready",
+    "supports_tools": true
   }
 }
