@@ -26,33 +26,31 @@
       "base_url": "${API_GATEWAY_BASE_URL}/{{ provider_name }}-runtime/model/{{ offering_name }}"
     }
   },
-{#- Preset overrides (meta etc.) must be NESTED inside the sentinel value —
-    a sibling key next to "$doc_preset" is rejected by expand_presets(). #}
   "documents": {
     "How to use this model": {
       "$doc_preset": "llm_description"
     },
     "Python code example": {
-      "$doc_preset": {"name": "llm_code_example_openai", "meta": {"sleep_after_test": 5}}
+      "$doc_preset": "llm_code_example_openai", "meta": {"sleep_after_test": 5}
     },
     "Python code example (Anthropic-style input)": {
-      "$doc_preset": {"name": "llm_code_example_anthropic_to_openai_requests", "meta": {"sleep_after_test": 5}}
+      "$doc_preset": "llm_code_example_anthropic_to_openai_requests", "meta": {"sleep_after_test": 5}
     },
     "cURL code example (Anthropic-style input)": {
-      "$doc_preset": {"name": "llm_code_example_anthropic_to_openai_shell", "meta": {"sleep_after_test": 5}}
+      "$doc_preset": "llm_code_example_anthropic_to_openai_shell", "meta": {"sleep_after_test": 5}
     },
 {#- Only models that accept the OpenAI ``tools`` param get the function-calling
     example; others 400/500 on it (probed by update_params.py -> supports_tools). #}
 {%- if supports_tools | default(false) %}
     "Python function calling code example": {
-      "$doc_preset": {"name": "llm_code_example_fc_requests", "meta": {"sleep_after_test": 5}}
+      "$doc_preset": "llm_code_example_fc_requests", "meta": {"sleep_after_test": 5}
     },
 {%- endif %}
     "JavaScript code example": {
-      "$doc_preset": {"name": "llm_code_example_javascript", "meta": {"sleep_after_test": 5}}
+      "$doc_preset": "llm_code_example_javascript", "meta": {"sleep_after_test": 5}
     },
     "cURL code example": {
-      "$doc_preset": {"name": "llm_code_example_shell", "meta": {"sleep_after_test": 5}}
+      "$doc_preset": "llm_code_example_shell", "meta": {"sleep_after_test": 5}
     },
 {#- Native Bedrock runtime (boto3) examples for the converse channel
     (unitysvc/unitysvc#1786). Local files for now; promote to unitysvc-data
@@ -76,7 +74,7 @@
       "mime_type": "python"
     },
     "Connectivity test": {
-      "$doc_preset": {"name": "llm_connectivity", "meta": {"sleep_after_test": 5}}
+      "$doc_preset": "llm_connectivity", "meta": {"sleep_after_test": 5}
     },
     "Default request body": {
       "$doc_preset": "llm_request_template"

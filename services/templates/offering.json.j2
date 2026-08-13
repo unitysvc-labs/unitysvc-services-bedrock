@@ -42,11 +42,11 @@
       "sort_order": 1
     },
 {#- Native Bedrock runtime channel (unitysvc/unitysvc#1786): Converse and
-    InvokeModel via boto3 pointed at the gateway. Same customer secret as the
-    mantle channel — bedrock-runtime accepts the Bedrock API key as a bearer
-    token. The gateway swaps svcpass for the customer key whether the client
-    authenticated with Bearer (AWS_BEARER_TOKEN_BEDROCK mode) or with SigV4
-    and a placeholder secret (default-credential boto3, needs unitysvc#1787).
+    InvokeModel via boto3 pointed at the gateway. api_key "__sigv4__": the
+    gateway strips the client's credential and re-signs the finalized
+    request with AWS SigV4 from the customer's IAM access keys — the client
+    authenticates with svcpass as the SigV4 access-key-id and a placeholder
+    secret (default-credential boto3 DX, unitysvc#1787).
     base_url carries /model/{{ offering_name }} so the converse_api
     interface's suffix (/converse, /invoke, ...) appends to the correct
     runtime path — and so document rendering can derive the model id from
@@ -58,8 +58,12 @@
     "converse": {
       "access_method": "http",
       "base_url": "https://bedrock-runtime.us-east-1.amazonaws.com/model/{{ offering_name }}",
-      "api_key": "${ customer_secrets.{{ env_api_key_name }} }",
-      "description": "Native Bedrock runtime (Converse / InvokeModel, including the streaming variants) with your Amazon Bedrock API key. Point boto3 at the gateway: endpoint_url is this service's URL up to (excluding) /model/, and the SDK appends /model/{modelId}/... itself.",
+      "api_key": "__sigv4__",
+      "access_key": "${ customer_secrets.AWS_ACCESS_KEY_ID }",
+      "secret_key": "${ customer_secrets.AWS_SECRET_ACCESS_KEY }",
+      "region": "us-east-1",
+      "sigv4_service": "bedrock",
+      "description": "Native Bedrock runtime (Converse / InvokeModel, including the streaming variants), signed upstream with your AWS IAM access keys (SigV4). Point boto3 at the gateway: endpoint_url is this service's URL up to (excluding) /model/, and the SDK appends /model/{modelId}/... itself.",
       "rate_limits": [],
       "request_formats": ["bedrock_converse", "bedrock_invoke"],
       "sort_order": 2
