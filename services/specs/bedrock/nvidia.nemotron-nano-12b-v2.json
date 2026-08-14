@@ -6,8 +6,8 @@
       "context_length": null,
       "data_retention_modes": [
         "none",
-        "provider_data_share",
-        "default"
+        "default",
+        "provider_data_share"
       ],
       "model_name": "nvidia.nemotron-nano-12b-v2",
       "owned_by": "system",

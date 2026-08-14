@@ -5,9 +5,9 @@
     "details": {
       "context_length": null,
       "data_retention_modes": [
-        "none",
+        "provider_data_share",
         "default",
-        "provider_data_share"
+        "none"
       ],
       "model_name": "moonshotai.kimi-k2.5",
       "owned_by": "system",

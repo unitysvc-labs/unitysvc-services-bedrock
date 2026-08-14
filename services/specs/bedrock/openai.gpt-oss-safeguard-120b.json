@@ -5,9 +5,9 @@
     "details": {
       "context_length": null,
       "data_retention_modes": [
-        "none",
+        "default",
         "provider_data_share",
-        "default"
+        "none"
       ],
       "model_name": "openai.gpt-oss-safeguard-120b",
       "owned_by": "system",

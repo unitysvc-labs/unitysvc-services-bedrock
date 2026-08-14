@@ -5,8 +5,8 @@
     "details": {
       "context_length": null,
       "data_retention_modes": [
-        "default",
         "provider_data_share",
+        "default",
         "none"
       ],
       "model_name": "qwen.qwen3-next-80b-a3b-instruct",

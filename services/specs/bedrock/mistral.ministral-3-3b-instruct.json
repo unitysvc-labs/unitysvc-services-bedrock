@@ -6,8 +6,8 @@
       "context_length": null,
       "data_retention_modes": [
         "none",
-        "default",
-        "provider_data_share"
+        "provider_data_share",
+        "default"
       ],
       "model_name": "mistral.ministral-3-3b-instruct",
       "owned_by": "system",

@@ -5,8 +5,8 @@
     "details": {
       "context_length": null,
       "data_retention_modes": [
-        "default",
         "provider_data_share",
+        "default",
         "none"
       ],
       "model_name": "minimax.minimax-m2",

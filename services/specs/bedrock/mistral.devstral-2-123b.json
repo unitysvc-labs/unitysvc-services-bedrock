@@ -6,8 +6,8 @@
       "context_length": null,
       "data_retention_modes": [
         "none",
-        "default",
-        "provider_data_share"
+        "provider_data_share",
+        "default"
       ],
       "model_name": "mistral.devstral-2-123b",
       "owned_by": "system",

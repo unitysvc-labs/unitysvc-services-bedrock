@@ -72,7 +72,16 @@ def _display_name(model_id: str) -> str:
 
 # A one-token chat request proves the model serves the OpenAI Chat Completions
 # route; a single ``get_weather`` tool proves it accepts the ``tools`` param.
-_PING = [{"role": "user", "content": "ping"}]
+# The probe body mirrors the SHAPE of the standard code-example presets —
+# system + user — not just a bare user turn. Some models accept a lone user
+# message but reject a system role (writer.palmyra-vision-7b 400s with
+# "Conversation roles must alternate user/assistant/..."), which passed a
+# bare-user probe and then failed every published example. If a model can't
+# serve the example shape, it can't ship with the standard examples.
+_PING = [
+    {"role": "system", "content": "You are a helpful assistant."},
+    {"role": "user", "content": "ping"},
+]
 _TOOL = [
     {
         "type": "function",

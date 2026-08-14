@@ -5,8 +5,8 @@
     "details": {
       "context_length": null,
       "data_retention_modes": [
-        "none",
         "provider_data_share",
+        "none",
         "default"
       ],
       "model_name": "mistral.magistral-small-2509",

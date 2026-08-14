@@ -5,8 +5,8 @@
     "details": {
       "context_length": null,
       "data_retention_modes": [
-        "provider_data_share",
         "default",
+        "provider_data_share",
         "none"
       ],
       "model_name": "google.gemma-3-27b-it",

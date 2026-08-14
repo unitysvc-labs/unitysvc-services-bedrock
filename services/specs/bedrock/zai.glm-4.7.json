@@ -6,8 +6,8 @@
       "context_length": null,
       "data_retention_modes": [
         "provider_data_share",
-        "default",
-        "none"
+        "none",
+        "default"
       ],
       "model_name": "zai.glm-4.7",
       "owned_by": "system",

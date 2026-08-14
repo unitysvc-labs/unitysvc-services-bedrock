@@ -5,8 +5,8 @@
     "details": {
       "context_length": null,
       "data_retention_modes": [
-        "default",
         "none",
+        "default",
         "provider_data_share"
       ],
       "model_name": "openai.gpt-oss-120b",
