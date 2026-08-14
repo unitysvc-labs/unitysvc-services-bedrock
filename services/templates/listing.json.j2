@@ -58,31 +58,22 @@
       "$doc_preset": "llm_code_example_shell", "meta": {"channels": ["byok"], "interfaces": ["provider_api"], "sleep_after_test": 5}
     },
 {#- Native Bedrock runtime (boto3) examples for the converse channel
-    (unitysvc/unitysvc#1786). Local files for now; promote to unitysvc-data
-    presets (bedrock_code_example_converse / _invoke) once stabilized.
-    meta.interfaces scopes each to the converse_api interface: its
-    service_base_url is the native runtime URL (…/bedrock-runtime/model/<id>)
-    the boto3 SDK expects — against the OpenAI provider_api URL the example
-    would (and did) 503-and-reject every revision. Gated with the converse
-    channel/interface: no native runtime id -> no boto3 examples. #}
+    (unitysvc/unitysvc#1786), via the shared unitysvc-data presets (>=0.1.33 —
+    the stabilized examples were promoted there). The preset carries the
+    intrinsic meta (requirements, output_contains / test-skip); the override
+    here adds the service-specific scoping: meta.interfaces pins each to the
+    converse_api interface (its service_base_url is the native runtime URL
+    …/bedrock-runtime/model/<id> the boto3 SDK expects — against the OpenAI
+    provider_api URL the example would 503) and meta.channels to the converse
+    channel. Gated with the channel/interface: no native id -> no examples. #}
 {%- if converse_model_id %}
     "Python code example (boto3 Converse)": {
-      "category": "code_example",
-      "description": "Call this model with the native AWS SDK: boto3 converse() pointed at the UnitySVC gateway.",
-      "file_path": "../../../docs/converse-code-example.py.j2",
-      "is_active": true,
-      "is_public": true,
-      "meta": {"channels": ["converse"], "interfaces": ["converse_api"], "output_contains": "connectivity ok", "requirements": ["boto3"], "sleep_after_test": 5},
-      "mime_type": "python"
+      "$doc_preset": "llm_code_example_bedrock_converse",
+      "meta": {"channels": ["converse"], "interfaces": ["converse_api"], "sleep_after_test": 5}
     },
     "Python code example (boto3 InvokeModel)": {
-      "category": "code_example",
-      "description": "Call this model with boto3 invoke_model() pointed at the UnitySVC gateway. The request body is the provider's native format.",
-      "file_path": "../../../docs/invoke-code-example.py.j2",
-      "is_active": true,
-      "is_public": true,
-      "meta": {"channels": ["converse"], "interfaces": ["converse_api"], "requirements": ["boto3"], "test": {"status": "skip"}},
-      "mime_type": "python"
+      "$doc_preset": "llm_code_example_bedrock_invoke",
+      "meta": {"channels": ["converse"], "interfaces": ["converse_api"]}
     },
 {%- endif %}
     "Connectivity test": {
