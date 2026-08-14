@@ -12,36 +12,72 @@
       "access_method": "http",
       "base_url": "${API_GATEWAY_BASE_URL}/{{ provider_name }}",
       "routing_key": {"model": "{{ offering_name }}"}
+    }{% if converse_model_id %},{% endif %}
+{#- Native Bedrock runtime interface (unitysvc/unitysvc#1786): the model id
+    is IN THE URL, so the request path alone locates the service — a direct
+    database match, no routing key. Deliberately a distinct first segment
+    ("{{ provider_name }}-runtime", NOT nested under /{{ provider_name }}):
+    a nested path would prefix-match the shared interface too and trip the
+    resolver's cross-service ambiguity backstop / double-candidate suffix
+    hazard. boto3 usage: endpoint_url = ${API_GATEWAY_BASE_URL}/{{ provider_name }}-runtime
+    and the SDK itself appends /model/<modelId>/converse|invoke. Customers
+    address the service by OUR (mantle) id here; the converse channel's
+    base_url carries the NATIVE runtime id and the gateway's matched-path
+    suffix logic maps between them. Gated: no native id -> no converse. #}
+{%- if converse_model_id %}
+    "converse_api": {
+      "access_method": "http",
+      "base_url": "${API_GATEWAY_BASE_URL}/{{ provider_name }}-runtime/model/{{ offering_name }}"
     }
+{%- endif %}
   },
   "documents": {
     "How to use this model": {
       "$doc_preset": "llm_description"
     },
     "Python code example": {
-      "$doc_preset": "llm_code_example_openai", "meta": {"sleep_after_test": 5}
+      "$doc_preset": "llm_code_example_openai", "meta": {"channels": ["byok"], "interfaces": ["provider_api"], "sleep_after_test": 5}
     },
     "Python code example (Anthropic-style input)": {
-      "$doc_preset": "llm_code_example_anthropic_to_openai_sdk", "meta": {"sleep_after_test": 5}
+      "$doc_preset": "llm_code_example_anthropic_to_openai_requests", "meta": {"channels": ["byok"], "interfaces": ["provider_api"], "sleep_after_test": 5}
     },
     "cURL code example (Anthropic-style input)": {
-      "$doc_preset": "llm_code_example_anthropic_to_openai_shell", "meta": {"sleep_after_test": 5}
+      "$doc_preset": "llm_code_example_anthropic_to_openai_shell", "meta": {"channels": ["byok"], "interfaces": ["provider_api"], "sleep_after_test": 5}
     },
 {#- Only models that accept the OpenAI ``tools`` param get the function-calling
     example; others 400/500 on it (probed by update_params.py -> supports_tools). #}
 {%- if supports_tools | default(false) %}
     "Python function calling code example": {
-      "$doc_preset": "llm_code_example_fc_requests", "meta": {"sleep_after_test": 5}
+      "$doc_preset": "llm_code_example_fc_requests", "meta": {"channels": ["byok"], "interfaces": ["provider_api"], "sleep_after_test": 5}
     },
 {%- endif %}
     "JavaScript code example": {
-      "$doc_preset": "llm_code_example_javascript", "meta": {"sleep_after_test": 5}
+      "$doc_preset": "llm_code_example_javascript", "meta": {"channels": ["byok"], "interfaces": ["provider_api"], "sleep_after_test": 5}
     },
     "cURL code example": {
-      "$doc_preset": "llm_code_example_shell", "meta": {"sleep_after_test": 5}
+      "$doc_preset": "llm_code_example_shell", "meta": {"channels": ["byok"], "interfaces": ["provider_api"], "sleep_after_test": 5}
     },
+{#- Native Bedrock runtime (boto3) examples for the converse channel
+    (unitysvc/unitysvc#1786), via the shared unitysvc-data presets (>=0.1.33 —
+    the stabilized examples were promoted there). The preset carries the
+    intrinsic meta (requirements, output_contains / test-skip); the override
+    here adds the service-specific scoping: meta.interfaces pins each to the
+    converse_api interface (its service_base_url is the native runtime URL
+    …/bedrock-runtime/model/<id> the boto3 SDK expects — against the OpenAI
+    provider_api URL the example would 503) and meta.channels to the converse
+    channel. Gated with the channel/interface: no native id -> no examples. #}
+{%- if converse_model_id %}
+    "Python code example (boto3 Converse)": {
+      "$doc_preset": "llm_code_example_bedrock_converse",
+      "meta": {"channels": ["converse"], "interfaces": ["converse_api"], "sleep_after_test": 5}
+    },
+    "Python code example (boto3 InvokeModel)": {
+      "$doc_preset": "llm_code_example_bedrock_invoke",
+      "meta": {"channels": ["converse"], "interfaces": ["converse_api"]}
+    },
+{%- endif %}
     "Connectivity test": {
-      "$doc_preset": "llm_connectivity", "meta": {"sleep_after_test": 5}
+      "$doc_preset": "llm_connectivity", "meta": {"channels": ["byok"], "interfaces": ["provider_api"], "sleep_after_test": 5}
     },
     "Default request body": {
       "$doc_preset": "llm_request_template"

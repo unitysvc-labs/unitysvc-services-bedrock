@@ -1,13 +1,14 @@
 {
   "parameters": {
     "api_base_url": "https://bedrock-mantle.us-east-1.api.aws",
+    "converse_model_id": "google.gemma-3-12b-it",
     "description": "Google Gemma 3 12B It served through Amazon Bedrock",
     "details": {
       "context_length": null,
       "data_retention_modes": [
         "default",
-        "provider_data_share",
-        "none"
+        "none",
+        "provider_data_share"
       ],
       "model_name": "google.gemma-3-12b-it",
       "owned_by": "system",

@@ -1,12 +1,13 @@
 {
   "parameters": {
     "api_base_url": "https://bedrock-mantle.us-east-1.api.aws",
+    "converse_model_id": "mistral.ministral-3-3b-instruct",
     "description": "Mistral Ministral 3 3B Instruct served through Amazon Bedrock",
     "details": {
       "context_length": null,
       "data_retention_modes": [
-        "none",
         "default",
+        "none",
         "provider_data_share"
       ],
       "model_name": "mistral.ministral-3-3b-instruct",

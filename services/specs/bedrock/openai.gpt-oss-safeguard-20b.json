@@ -1,13 +1,14 @@
 {
   "parameters": {
     "api_base_url": "https://bedrock-mantle.us-east-1.api.aws",
+    "converse_model_id": "openai.gpt-oss-safeguard-20b",
     "description": "Openai Gpt Oss Safeguard 20B served through Amazon Bedrock",
     "details": {
       "context_length": null,
       "data_retention_modes": [
         "default",
-        "provider_data_share",
-        "none"
+        "none",
+        "provider_data_share"
       ],
       "model_name": "openai.gpt-oss-safeguard-20b",
       "owned_by": "system",

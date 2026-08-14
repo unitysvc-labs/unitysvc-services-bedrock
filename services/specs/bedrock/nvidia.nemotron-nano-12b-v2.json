@@ -1,13 +1,14 @@
 {
   "parameters": {
     "api_base_url": "https://bedrock-mantle.us-east-1.api.aws",
+    "converse_model_id": "nvidia.nemotron-nano-12b-v2",
     "description": "Nvidia Nemotron Nano 12B V2 served through Amazon Bedrock",
     "details": {
       "context_length": null,
       "data_retention_modes": [
+        "default",
         "none",
-        "provider_data_share",
-        "default"
+        "provider_data_share"
       ],
       "model_name": "nvidia.nemotron-nano-12b-v2",
       "owned_by": "system",

@@ -1,12 +1,13 @@
 {
   "parameters": {
     "api_base_url": "https://bedrock-mantle.us-east-1.api.aws",
+    "converse_model_id": "mistral.mistral-large-3-675b-instruct",
     "description": "Mistral Mistral Large 3 675B Instruct served through Amazon Bedrock",
     "details": {
       "context_length": null,
       "data_retention_modes": [
-        "none",
         "default",
+        "none",
         "provider_data_share"
       ],
       "model_name": "mistral.mistral-large-3-675b-instruct",

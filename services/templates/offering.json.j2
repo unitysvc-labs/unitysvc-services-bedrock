@@ -37,7 +37,45 @@
       "routing_key": {"model": "{{ offering_name }}"},
       "request_transformer": {
         "llm_translator": "anthropic_to_openai"
-      }
+      },
+      "request_formats": ["openai", "anthropic"],
+      "sort_order": 1
+    }{% if converse_model_id %},{% endif %}
+{#- Native Bedrock runtime channel (unitysvc/unitysvc#1786): Converse and
+    InvokeModel via boto3 pointed at the gateway. api_key "__sigv4__": the
+    gateway strips the client's credential and re-signs the finalized
+    request with AWS SigV4 from the customer's IAM access keys — the client
+    authenticates with svcpass as the SigV4 access-key-id and a placeholder
+    secret (default-credential boto3 DX, unitysvc#1787).
+    base_url carries /model/{{ offering_name }} so the converse_api
+    interface's suffix (/converse, /invoke, ...) appends to the correct
+    runtime path — and so document rendering can derive the model id from
+    the URL in every context. No routing_key: the model is in the URL, and a
+    routing_key would make the gateway inject "model" into the Converse JSON
+    body, corrupting the schema. No llm_translator: the body passes through
+    opaquely. Requests reach this channel by format (request_formats) or an
+    explicit @converse pin. #}
+{%- if converse_model_id %}
+    "converse": {
+      "access_method": "http",
+{#- The NATIVE runtime id, not the mantle id: the two catalogs spell the same
+    model differently (qwen.qwen3-32b -> qwen.qwen3-32b-v1:0, moonshotai. ->
+    moonshot., ...) and the native runtime rejects mantle spellings with "The
+    provided model identifier is invalid". Customers still address the service
+    by the mantle id in the converse_api interface URL; the gateway's
+    matched-path suffix logic swaps in this native base_url. Models with no
+    native id get no converse channel at all (this whole block is gated). #}
+      "base_url": "https://bedrock-runtime.us-east-1.amazonaws.com/model/{{ converse_model_id }}",
+      "api_key": "__sigv4__",
+      "access_key": "${ customer_secrets.AWS_ACCESS_KEY_ID }",
+      "secret_key": "${ customer_secrets.AWS_SECRET_ACCESS_KEY }",
+      "region": "us-east-1",
+      "sigv4_service": "bedrock",
+      "description": "Native Bedrock runtime (Converse / InvokeModel, including the streaming variants), signed upstream with your AWS IAM access keys (SigV4). Point boto3 at the gateway: endpoint_url is this service's URL up to (excluding) /model/, and the SDK appends /model/{modelId}/... itself.",
+      "rate_limits": [],
+      "request_formats": ["bedrock_converse", "bedrock_invoke"],
+      "sort_order": 2
     }
+{%- endif %}
   }
 }

@@ -1,12 +1,13 @@
 {
   "parameters": {
     "api_base_url": "https://bedrock-mantle.us-east-1.api.aws",
+    "converse_model_id": "mistral.devstral-2-123b",
     "description": "Mistral Devstral 2 123B served through Amazon Bedrock",
     "details": {
       "context_length": null,
       "data_retention_modes": [
-        "none",
         "default",
+        "none",
         "provider_data_share"
       ],
       "model_name": "mistral.devstral-2-123b",

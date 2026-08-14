@@ -1,12 +1,13 @@
 {
   "parameters": {
     "api_base_url": "https://bedrock-mantle.us-east-1.api.aws",
+    "converse_model_id": "moonshotai.kimi-k2.5",
     "description": "Moonshotai Kimi K2 5 served through Amazon Bedrock",
     "details": {
       "context_length": null,
       "data_retention_modes": [
-        "none",
         "default",
+        "none",
         "provider_data_share"
       ],
       "model_name": "moonshotai.kimi-k2.5",

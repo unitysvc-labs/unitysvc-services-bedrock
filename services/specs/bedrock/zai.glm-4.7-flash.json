@@ -1,13 +1,14 @@
 {
   "parameters": {
     "api_base_url": "https://bedrock-mantle.us-east-1.api.aws",
+    "converse_model_id": "zai.glm-4.7-flash",
     "description": "Zai Glm 4 7 Flash served through Amazon Bedrock",
     "details": {
       "context_length": null,
       "data_retention_modes": [
+        "default",
         "none",
-        "provider_data_share",
-        "default"
+        "provider_data_share"
       ],
       "model_name": "zai.glm-4.7-flash",
       "owned_by": "system",

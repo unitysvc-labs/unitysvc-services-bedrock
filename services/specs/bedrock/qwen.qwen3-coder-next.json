@@ -1,13 +1,14 @@
 {
   "parameters": {
     "api_base_url": "https://bedrock-mantle.us-east-1.api.aws",
+    "converse_model_id": "qwen.qwen3-coder-next",
     "description": "Qwen Qwen3 Coder Next served through Amazon Bedrock",
     "details": {
       "context_length": null,
       "data_retention_modes": [
-        "provider_data_share",
         "default",
-        "none"
+        "none",
+        "provider_data_share"
       ],
       "model_name": "qwen.qwen3-coder-next",
       "owned_by": "system",

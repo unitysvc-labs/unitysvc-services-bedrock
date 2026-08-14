@@ -1,13 +1,14 @@
 {
   "parameters": {
     "api_base_url": "https://bedrock-mantle.us-east-1.api.aws",
+    "converse_model_id": "minimax.minimax-m2.5",
     "description": "Minimax Minimax M2 5 served through Amazon Bedrock",
     "details": {
       "context_length": null,
       "data_retention_modes": [
+        "default",
         "none",
-        "provider_data_share",
-        "default"
+        "provider_data_share"
       ],
       "model_name": "minimax.minimax-m2.5",
       "owned_by": "system",
@@ -29,6 +30,6 @@
     "provider_display_name": "Amazon Bedrock",
     "service_type": "llm",
     "status": "ready",
-    "supports_tools": true
+    "supports_tools": false
   }
 }

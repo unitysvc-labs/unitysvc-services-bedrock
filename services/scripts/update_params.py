@@ -72,7 +72,16 @@ def _display_name(model_id: str) -> str:
 
 # A one-token chat request proves the model serves the OpenAI Chat Completions
 # route; a single ``get_weather`` tool proves it accepts the ``tools`` param.
-_PING = [{"role": "user", "content": "ping"}]
+# The probe body mirrors the SHAPE of the standard code-example presets —
+# system + user — not just a bare user turn. Some models accept a lone user
+# message but reject a system role (writer.palmyra-vision-7b 400s with
+# "Conversation roles must alternate user/assistant/..."), which passed a
+# bare-user probe and then failed every published example. If a model can't
+# serve the example shape, it can't ship with the standard examples.
+_PING = [
+    {"role": "system", "content": "You are a helpful assistant."},
+    {"role": "user", "content": "ping"},
+]
 _TOOL = [
     {
         "type": "function",
@@ -143,6 +152,49 @@ def _chat_ok(client: httpx.Client, model_id: str, *, tools: bool) -> tuple[bool,
     return False, f"HTTP {r.status_code}: {msg[:80]}"
 
 
+def _native_foundation_model_ids() -> set[str]:
+    """Model ids the NATIVE Bedrock runtime serves (``bedrock
+    list-foundation-models``, SigV4 via the default boto3 credential chain).
+
+    The mantle OpenAI surface and the native Converse/InvokeModel runtime have
+    DIFFERENT catalogs and different spellings for the same model: mantle's
+    ``qwen.qwen3-32b`` is natively ``qwen.qwen3-32b-v1:0``, mantle's
+    ``moonshotai.kimi-k2-thinking`` is natively ``moonshot.kimi-k2-thinking``,
+    and some mantle models (``zai.glm-4.6``, ``deepseek.v3.1``) do not exist
+    natively at all. Sending a mantle id to the native runtime fails with
+    "The provided model identifier is invalid", which is exactly how every
+    converse-channel gateway test rejected.
+    """
+    import boto3  # sellers venv dependency; needs AWS IAM creds in the env
+
+    bed = boto3.client("bedrock", region_name=AWS_REGION)
+    # Not a paginated operation — the full catalog comes back in one response.
+    resp = bed.list_foundation_models()
+    return {m["modelId"] for m in resp.get("modelSummaries", []) if m.get("modelId")}
+
+
+def _native_converse_id(model_id: str, native_ids: set[str]) -> str | None:
+    """Map a mantle model id to its native-runtime id, or None if the model is
+    not served natively (then the service ships without a converse channel).
+
+    Candidate spellings, first match wins — derived from the observed drift:
+    exact; version suffixes (``-v1:0`` / ``-1:0``); ``-instruct`` stripped
+    (mantle appends it, the native catalog usually doesn't), with the same
+    suffixes; and the ``moonshotai.`` -> ``moonshot.`` vendor alias applied to
+    all of the above.
+    """
+    stems = [model_id]
+    if model_id.endswith("-instruct"):
+        stems.append(model_id[: -len("-instruct")])
+    if model_id.startswith("moonshotai."):
+        stems.extend([s.replace("moonshotai.", "moonshot.", 1) for s in list(stems)])
+    for stem in stems:
+        for candidate in (stem, f"{stem}-v1:0", f"{stem}-1:0"):
+            if candidate in native_ids:
+                return candidate
+    return None
+
+
 def iter_models(client: httpx.Client) -> Iterator[dict]:
     """Yield one template-variable dict per model the account can actually serve
     on the OpenAI Chat Completions route (see the module docstring for probes)."""
@@ -151,6 +203,9 @@ def iter_models(client: httpx.Client) -> Iterator[dict]:
     r.raise_for_status()
     models = r.json().get("data", [])
     print(f"Found {len(models)} catalog models; probing availability + route\n")
+
+    native_ids = _native_foundation_model_ids()
+    print(f"Native runtime catalog: {len(native_ids)} foundation models\n")
 
     kept = 0
     for i, m in enumerate(models, 1):
@@ -168,8 +223,12 @@ def iter_models(client: httpx.Client) -> Iterator[dict]:
             print(f"  skip (not on OpenAI chat route): {reason}")
             continue
         supports_tools, _ = _chat_ok(client, model_id, tools=True)
+        converse_model_id = _native_converse_id(model_id, native_ids)
         kept += 1
-        print(f"  keep (tools={'yes' if supports_tools else 'no'})")
+        print(
+            f"  keep (tools={'yes' if supports_tools else 'no'}, "
+            f"converse={converse_model_id or 'no'})"
+        )
 
         display_name = _display_name(model_id)
         # Canonical (snake_case) metadata the platform validator requires for LLM
@@ -184,7 +243,9 @@ def iter_models(client: httpx.Client) -> Iterator[dict]:
         # data_retention.allowed_modes is a useful privacy signal to surface.
         data_retention = m.get("data_retention") or {}
         if data_retention.get("allowed_modes"):
-            details["data_retention_modes"] = data_retention["allowed_modes"]
+            # Sorted: the API returns the list in nondeterministic order, which
+            # would dirty every param file on every regen.
+            details["data_retention_modes"] = sorted(data_retention["allowed_modes"])
 
         # BYOK: the customer's own key pays AWS directly, so the service is free
         # through the UnitySVC gateway. Keep the price cell short ("Free (BYOK)").
@@ -204,6 +265,11 @@ def iter_models(client: httpx.Client) -> Iterator[dict]:
             # Gates the function-calling example in the listing template — models
             # that reject the ``tools`` param would otherwise fail that one doc.
             "supports_tools": supports_tools,
+            # The NATIVE Bedrock runtime id for the converse channel (differs
+            # from the mantle id: version suffixes, -instruct stripping, vendor
+            # aliases), or None when the model isn't served natively — then the
+            # templates omit the converse channel/interface/examples entirely.
+            "converse_model_id": converse_model_id,
             "payout_price": pricing,
             # Listing / channel fields
             "list_price": pricing,
