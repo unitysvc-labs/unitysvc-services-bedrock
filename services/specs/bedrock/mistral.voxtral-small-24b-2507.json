@@ -1,6 +1,7 @@
 {
   "parameters": {
     "api_base_url": "https://bedrock-mantle.us-east-1.api.aws",
+    "converse_model_id": "mistral.voxtral-small-24b-2507",
     "description": "Mistral Voxtral Small 24B 2507 served through Amazon Bedrock",
     "details": {
       "context_length": null,

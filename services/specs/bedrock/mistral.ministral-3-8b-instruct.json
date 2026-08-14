@@ -1,6 +1,7 @@
 {
   "parameters": {
     "api_base_url": "https://bedrock-mantle.us-east-1.api.aws",
+    "converse_model_id": "mistral.ministral-3-8b-instruct",
     "description": "Mistral Ministral 3 8B Instruct served through Amazon Bedrock",
     "details": {
       "context_length": null,

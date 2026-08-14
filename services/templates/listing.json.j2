@@ -12,7 +12,7 @@
       "access_method": "http",
       "base_url": "${API_GATEWAY_BASE_URL}/{{ provider_name }}",
       "routing_key": {"model": "{{ offering_name }}"}
-    },
+    }{% if converse_model_id %},{% endif %}
 {#- Native Bedrock runtime interface (unitysvc/unitysvc#1786): the model id
     is IN THE URL, so the request path alone locates the service — a direct
     database match, no routing key. Deliberately a distinct first segment
@@ -20,11 +20,16 @@
     a nested path would prefix-match the shared interface too and trip the
     resolver's cross-service ambiguity backstop / double-candidate suffix
     hazard. boto3 usage: endpoint_url = ${API_GATEWAY_BASE_URL}/{{ provider_name }}-runtime
-    and the SDK itself appends /model/<modelId>/converse|invoke. #}
+    and the SDK itself appends /model/<modelId>/converse|invoke. Customers
+    address the service by OUR (mantle) id here; the converse channel's
+    base_url carries the NATIVE runtime id and the gateway's matched-path
+    suffix logic maps between them. Gated: no native id -> no converse. #}
+{%- if converse_model_id %}
     "converse_api": {
       "access_method": "http",
       "base_url": "${API_GATEWAY_BASE_URL}/{{ provider_name }}-runtime/model/{{ offering_name }}"
     }
+{%- endif %}
   },
   "documents": {
     "How to use this model": {
@@ -58,7 +63,9 @@
     meta.interfaces scopes each to the converse_api interface: its
     service_base_url is the native runtime URL (…/bedrock-runtime/model/<id>)
     the boto3 SDK expects — against the OpenAI provider_api URL the example
-    would (and did) 503-and-reject every revision. #}
+    would (and did) 503-and-reject every revision. Gated with the converse
+    channel/interface: no native runtime id -> no boto3 examples. #}
+{%- if converse_model_id %}
     "Python code example (boto3 Converse)": {
       "category": "code_example",
       "description": "Call this model with the native AWS SDK: boto3 converse() pointed at the UnitySVC gateway.",
@@ -77,6 +84,7 @@
       "meta": {"channels": ["converse"], "interfaces": ["converse_api"], "requirements": ["boto3"], "test": {"status": "skip"}},
       "mime_type": "python"
     },
+{%- endif %}
     "Connectivity test": {
       "$doc_preset": "llm_connectivity", "meta": {"channels": ["byok"], "interfaces": ["provider_api"], "sleep_after_test": 5}
     },

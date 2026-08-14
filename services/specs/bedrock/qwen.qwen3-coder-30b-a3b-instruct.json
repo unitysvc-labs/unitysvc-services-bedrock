@@ -1,6 +1,7 @@
 {
   "parameters": {
     "api_base_url": "https://bedrock-mantle.us-east-1.api.aws",
+    "converse_model_id": "qwen.qwen3-coder-30b-a3b-v1:0",
     "description": "Qwen Qwen3 Coder 30B A3B Instruct served through Amazon Bedrock",
     "details": {
       "context_length": null,
