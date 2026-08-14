@@ -49,8 +49,12 @@ client = boto3.client(
 response = client.converse(
     modelId=model_id,
     messages=[{"role": "user", "content": [{"text": "Reply with the single word: pong"}]}],
-    inferenceConfig={"maxTokens": 16},
+    inferenceConfig={"maxTokens": 64},
 )
 
-print(response["output"]["message"]["content"][0]["text"])
+# Reasoning models emit a reasoningContent block before (or instead of, when
+# maxTokens is tight) the text block — print the first text block if there is
+# one, else the first block as-is. Never assume content[0] carries "text".
+content = response["output"]["message"]["content"]
+print(next((block["text"] for block in content if "text" in block), content[0]))
 print("connectivity ok")
