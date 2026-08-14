@@ -6,8 +6,8 @@
       "context_length": null,
       "data_retention_modes": [
         "default",
-        "provider_data_share",
-        "none"
+        "none",
+        "provider_data_share"
       ],
       "model_name": "qwen.qwen3-coder-30b-a3b-instruct",
       "owned_by": "system",

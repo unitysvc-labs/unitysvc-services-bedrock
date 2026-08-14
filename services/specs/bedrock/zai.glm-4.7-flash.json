@@ -5,8 +5,8 @@
     "details": {
       "context_length": null,
       "data_retention_modes": [
-        "none",
         "default",
+        "none",
         "provider_data_share"
       ],
       "model_name": "zai.glm-4.7-flash",

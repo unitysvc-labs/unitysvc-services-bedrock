@@ -5,9 +5,9 @@
     "details": {
       "context_length": null,
       "data_retention_modes": [
-        "provider_data_share",
+        "default",
         "none",
-        "default"
+        "provider_data_share"
       ],
       "model_name": "qwen.qwen3-coder-480b-a35b-instruct",
       "owned_by": "system",

@@ -193,7 +193,9 @@ def iter_models(client: httpx.Client) -> Iterator[dict]:
         # data_retention.allowed_modes is a useful privacy signal to surface.
         data_retention = m.get("data_retention") or {}
         if data_retention.get("allowed_modes"):
-            details["data_retention_modes"] = data_retention["allowed_modes"]
+            # Sorted: the API returns the list in nondeterministic order, which
+            # would dirty every param file on every regen.
+            details["data_retention_modes"] = sorted(data_retention["allowed_modes"])
 
         # BYOK: the customer's own key pays AWS directly, so the service is free
         # through the UnitySVC gateway. Keep the price cell short ("Free (BYOK)").

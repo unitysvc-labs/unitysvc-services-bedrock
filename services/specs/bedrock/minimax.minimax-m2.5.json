@@ -6,8 +6,8 @@
       "context_length": null,
       "data_retention_modes": [
         "default",
-        "provider_data_share",
-        "none"
+        "none",
+        "provider_data_share"
       ],
       "model_name": "minimax.minimax-m2.5",
       "owned_by": "system",

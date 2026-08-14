@@ -6,8 +6,8 @@
       "context_length": null,
       "data_retention_modes": [
         "default",
-        "provider_data_share",
-        "none"
+        "none",
+        "provider_data_share"
       ],
       "model_name": "nvidia.nemotron-super-3-120b",
       "owned_by": "system",

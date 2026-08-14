@@ -5,9 +5,9 @@
     "details": {
       "context_length": null,
       "data_retention_modes": [
+        "default",
         "none",
-        "provider_data_share",
-        "default"
+        "provider_data_share"
       ],
       "model_name": "qwen.qwen3-235b-a22b-2507",
       "owned_by": "system",

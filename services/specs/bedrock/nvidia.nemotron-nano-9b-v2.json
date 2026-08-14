@@ -5,9 +5,9 @@
     "details": {
       "context_length": null,
       "data_retention_modes": [
-        "provider_data_share",
+        "default",
         "none",
-        "default"
+        "provider_data_share"
       ],
       "model_name": "nvidia.nemotron-nano-9b-v2",
       "owned_by": "system",
