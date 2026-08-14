@@ -2,6 +2,7 @@
   "contact_email": "service@unitysvc.com",
   "display_name": "Amazon Bedrock",
   "homepage": "https://aws.amazon.com/bedrock/",
+  "logo": "https://www.drupal.org/files/project-images/bedrock-logo.jpg",
   "name": "bedrock",
   "status": "ready",
   "terms_of_service": "https://aws.amazon.com/service-terms/",
