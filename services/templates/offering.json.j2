@@ -31,6 +31,13 @@
   "upstream_access_config": {
     "byok": {
       "access_method": "http",
+{#- applicable_interfaces (unitysvc/unitysvc#1825): instruction-only pairing
+    for the how-to-use guide — this service exposes two shared interfaces, and
+    without the declaration consumers cannot tell which URL goes with which
+    channel. Never consulted by routing: the runtime selects channels by
+    request format and does not know which interface a request arrived
+    through. #}
+      "applicable_interfaces": ["provider_api"],
       "base_url": "{{ api_base_url }}",
       "api_key": "${ customer_secrets.{{ env_api_key_name }} }",
       "rate_limits": [],
@@ -58,6 +65,7 @@
 {%- if converse_model_id %}
     "converse": {
       "access_method": "http",
+      "applicable_interfaces": ["converse_api"],
 {#- The NATIVE runtime id, not the mantle id: the two catalogs spell the same
     model differently (qwen.qwen3-32b -> qwen.qwen3-32b-v1:0, moonshotai. ->
     moonshot., ...) and the native runtime rejects mantle spellings with "The
