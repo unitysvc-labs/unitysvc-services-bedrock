@@ -30,6 +30,6 @@
     "provider_display_name": "Amazon Bedrock",
     "service_type": "llm",
     "status": "ready",
-    "supports_tools": false
+    "supports_tools": true
   }
 }
