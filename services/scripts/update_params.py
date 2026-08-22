@@ -165,7 +165,11 @@ def _native_foundation_model_ids() -> set[str]:
     "The provided model identifier is invalid", which is exactly how every
     converse-channel gateway test rejected.
     """
-    import boto3  # sellers venv dependency; needs AWS IAM creds in the env
+    # Declared in templates/config.json services_populator.requirements — it is
+    # NOT pulled in by unitysvc-sellers. Adding an import here without adding it
+    # there fails the populate run with ModuleNotFoundError.
+    # Uses the default boto3 credential chain, so it needs AWS IAM creds in the env.
+    import boto3
 
     bed = boto3.client("bedrock", region_name=AWS_REGION)
     # Not a paginated operation — the full catalog comes back in one response.
