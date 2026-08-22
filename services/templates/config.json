@@ -4,6 +4,7 @@
       "scripts/update_params.py"
     ],
     "requirements": [
+      "boto3",
       "httpx",
       "unitysvc-sellers"
     ]
