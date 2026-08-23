@@ -17,8 +17,11 @@ offering template exposes every model in both OpenAI and Anthropic dialects.
 (``/v1/chat/completions`` for OpenAI, ``/v1/messages`` -> ``/v1/chat/completions``
 for the translated Anthropic dialect), which is exactly the mantle chat path.
 
-The ``/v1/models`` catalog returns neither pricing nor context length, so those
-are left unknown (``null``); enrich later from a maintained table if needed.
+The ``/v1/models`` catalog returns neither pricing nor context length. Context
+length is left unknown (``null``). Pricing is enriched from the litellm public
+rate table (``model_prices_and_context_window.json``) — see ``_pricing_note()``,
+which matches ONLY Bedrock-provider entries under exact id spellings, so a model
+litellm does not carry gets no note rather than a neighbouring provider's rate.
 
 **Availability is probed, not read from the catalog.** ``GET /v1/models`` marks
 *every* model ``available`` regardless of account entitlement or which API it
@@ -49,6 +52,7 @@ from typing import Iterator
 
 import httpx
 
+from unitysvc_sellers.model_data import ModelDataFetcher
 from unitysvc_sellers.params_render import write_params_from_iterator
 
 # Provider configuration
@@ -199,6 +203,62 @@ def _native_converse_id(model_id: str, native_ids: set[str]) -> str | None:
     return None
 
 
+def _format_price(price: float) -> str:
+    """Render a per-1M-token price without a pointless trailing ``.0``."""
+    return str(int(price)) if price == int(price) else str(round(price, 4))
+
+
+def _pricing_note(
+    model_id: str, converse_model_id: str | None, litellm: dict
+) -> str | None:
+    """AWS's published on-demand rate for a model, as a one-line rate card, or
+    None when litellm carries no Bedrock entry for it.
+
+    The mantle ``/v1/models`` catalog has no pricing at all, so this is the only
+    machine-readable source we have; hand-maintaining a table of AWS list prices
+    in this repo would go stale silently.
+
+    The lookup is deliberately STRICT rather than reusing
+    ``ModelDataLookup.lookup_model_details``: that helper falls back to substring
+    matching over ~3k keys, which for a Bedrock id like ``openai.gpt-oss-120b``
+    happily returns Groq's or DeepInfra's rate for the same open-weights model.
+    Those are real numbers for the wrong bill. So: exact keys only, in the two
+    spellings litellm actually uses (bare and ``bedrock/``-prefixed) for both the
+    mantle id and the native runtime id, and the entry must declare a Bedrock
+    provider. A model with no match yields None and the templates degrade to a
+    bare "Free ~ BYOK" — no invented rate.
+    """
+    if not litellm:
+        return None
+    candidates = [model_id, f"bedrock/{model_id}"]
+    if converse_model_id:
+        candidates += [converse_model_id, f"bedrock/{converse_model_id}"]
+    for key in candidates:
+        entry = litellm.get(key)
+        if not entry:
+            continue
+        # "bedrock" / "bedrock_converse" — never another provider's listing that
+        # happens to be filed under a Bedrock-shaped id.
+        if not str(entry.get("litellm_provider", "")).startswith("bedrock"):
+            continue
+        if "input_cost_per_token" not in entry or "output_cost_per_token" not in entry:
+            continue
+        inp = float(entry["input_cost_per_token"]) * 1_000_000
+        out = float(entry["output_cost_per_token"]) * 1_000_000
+        cached = entry.get("cache_read_input_token_cost")
+        if cached is not None:
+            return (
+                f"${_format_price(inp)} / ${_format_price(out)} / "
+                f"${_format_price(float(cached) * 1_000_000)} "
+                f"per 1M input/output/cached tokens"
+            )
+        return (
+            f"${_format_price(inp)} / ${_format_price(out)} "
+            f"per 1M input/output tokens"
+        )
+    return None
+
+
 def iter_models(client: httpx.Client) -> Iterator[dict]:
     """Yield one template-variable dict per model the account can actually serve
     on the OpenAI Chat Completions route (see the module docstring for probes)."""
@@ -210,6 +270,15 @@ def iter_models(client: httpx.Client) -> Iterator[dict]:
 
     native_ids = _native_foundation_model_ids()
     print(f"Native runtime catalog: {len(native_ids)} foundation models\n")
+
+    # Public rate table for the BYOK price note (the mantle catalog has none).
+    # Best-effort: a fetch failure must not take the whole populate run down —
+    # every model then simply renders "Free ~ BYOK" with no rate.
+    try:
+        litellm = ModelDataFetcher().fetch_litellm_model_data(quiet=True)
+    except Exception as exc:  # noqa: BLE001 - advisory data only
+        print(f"WARNING: litellm rate table unavailable ({exc}); no price notes\n")
+        litellm = {}
 
     kept = 0
     for i, m in enumerate(models, 1):
@@ -252,8 +321,13 @@ def iter_models(client: httpx.Client) -> Iterator[dict]:
             details["data_retention_modes"] = sorted(data_retention["allowed_modes"])
 
         # BYOK: the customer's own key pays AWS directly, so the service is free
-        # through the UnitySVC gateway. Keep the price cell short ("Free (BYOK)").
+        # through the UnitySVC gateway. This plain description is what
+        # payout_price keeps (seller-facing). The customer-facing listing cell is
+        # composed in listing.json.j2 from pricing_note, into the
+        # "<amount> ~<PILL> | <note>" grammar; do not build it here, since this
+        # dict feeds payout_price too.
         pricing = {"type": "constant", "price": "0", "description": "Free (BYOK)"}
+        pricing_note = _pricing_note(model_id, converse_model_id, litellm)
 
         yield {
             # Path / identity (stripped from the written parameters).
@@ -277,6 +351,10 @@ def iter_models(client: httpx.Client) -> Iterator[dict]:
             "payout_price": pricing,
             # Listing / channel fields
             "list_price": pricing,
+            # AWS's on-demand rate, for the BYOK price-cell note and the closing
+            # pricing paragraph (both template-rendered). None where litellm has
+            # no Bedrock entry — then neither surface states a rate.
+            "pricing_note": pricing_note,
             "provider_display_name": PROVIDER_DISPLAY_NAME,
             "api_base_url": API_BASE_URL,
             "env_api_key_name": ENV_API_KEY_NAME,

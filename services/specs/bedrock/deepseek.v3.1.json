@@ -27,6 +27,7 @@
       "price": "0",
       "type": "constant"
     },
+    "pricing_note": null,
     "provider_display_name": "Amazon Bedrock",
     "service_type": "llm",
     "status": "ready",
