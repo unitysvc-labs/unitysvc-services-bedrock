@@ -35,7 +35,15 @@
   "summary": {{ (_brief | trim)[:200] | tojson }},
   "description": {{ _description | tojson }},
   "service_type": "{{ service_type }}",
-  "capabilities": ["{{ service_type }}"],
+{#- Platform capability vocabulary (unitysvc docs/capabilities.yml): every model
+    in this catalog is a chat service — a conversation in, generated text out.
+    That includes both Bedrock surfaces (Converse and InvokeModel): which one
+    the caller speaks is `input_formats`, not a different capability. It also
+    includes openai.gpt-oss-safeguard-*, which serves ordinary Converse calls
+    and answers in generated text — safety is what you use it FOR, not a
+    different contract. (Contrast Groq's llama-prompt-guard, which rejects a
+    normal chat request outright and is therefore `moderate`.) -#}
+  "capabilities": ["chat"],
   "status": "{{ status | default('ready') }}",
   "currency": "USD",
   "tags": ["ai", "gateway", "byok"],
