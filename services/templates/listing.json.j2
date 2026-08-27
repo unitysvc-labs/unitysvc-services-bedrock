@@ -55,56 +55,55 @@
     }
 {%- endif %}
   },
+  {#- Every document below is DERIVED from what this service is: its
+      capability, the request dialects it accepts, and WHERE each dialect is
+      reachable (unitysvc/unitysvc#1899). The catalog-wide shape lives in
+      unitysvc-data's `llm_example_collection` preset, so a new example flavour
+      or a fixed preset reaches this repo on the next release rather than
+      through a PR here.
+
+      Bedrock is the service the collection's GROUP form exists for. Each group
+      names the dialects it covers plus the channel and interface that serve
+      them, and the collection stamps `meta.channels` / `meta.interfaces` onto
+      every executable document it derives from that group — the scoping this
+      block previously repeated by hand on all eleven documents:
+
+        byok / provider_api    OpenAI + Anthropic dialects over the
+                               OpenAI-compatible surface.
+        converse / converse_api  the native boto3 examples. The pin is not
+                               cosmetic: converse_api's service_base_url is the
+                               native runtime URL (…/bedrock-runtime/model/<id>)
+                               the SDK expects; against the provider_api URL the
+                               example 503s.
+
+      `primary: true` on the byok group is what keeps the CONNECTIVITY probe on
+      byok/provider_api — a probe has to resolve to exactly one channel and
+      interface, and with two groups the collection needs to be told which.
+
+      The converse group is gated on `converse_model_id` exactly as before: no
+      native id, no group, no boto3 examples. -#}
   "documents": {
-    "How to use this model": {
-      "$doc_preset": "llm_description"
-    },
-    "Python code example": {
-      "$doc_preset": "llm_code_example_openai", "meta": {"channels": ["byok"], "interfaces": ["provider_api"], "sleep_after_test": 5}
-    },
-    "Python code example (Anthropic-style input)": {
-      "$doc_preset": "llm_code_example_anthropic_to_openai_requests", "meta": {"channels": ["byok"], "interfaces": ["provider_api"], "sleep_after_test": 5}
-    },
-    "cURL code example (Anthropic-style input)": {
-      "$doc_preset": "llm_code_example_anthropic_to_openai_shell", "meta": {"channels": ["byok"], "interfaces": ["provider_api"], "sleep_after_test": 5}
-    },
-{#- Only models that accept the OpenAI ``tools`` param get the function-calling
-    example; others 400/500 on it (probed by update_params.py -> supports_tools). #}
-{%- if supports_tools | default(false) %}
-    "Python function calling code example": {
-      "$doc_preset": "llm_code_example_fc_requests", "meta": {"channels": ["byok"], "interfaces": ["provider_api"], "sleep_after_test": 5}
-    },
-{%- endif %}
-    "JavaScript code example": {
-      "$doc_preset": "llm_code_example_javascript", "meta": {"channels": ["byok"], "interfaces": ["provider_api"], "sleep_after_test": 5}
-    },
-    "cURL code example": {
-      "$doc_preset": "llm_code_example_shell", "meta": {"channels": ["byok"], "interfaces": ["provider_api"], "sleep_after_test": 5}
-    },
-{#- Native Bedrock runtime (boto3) examples for the converse channel
-    (unitysvc/unitysvc#1786), via the shared unitysvc-data presets (>=0.1.33 —
-    the stabilized examples were promoted there). The preset carries the
-    intrinsic meta (requirements, output_contains / test-skip); the override
-    here adds the service-specific scoping: meta.interfaces pins each to the
-    converse_api interface (its service_base_url is the native runtime URL
-    …/bedrock-runtime/model/<id> the boto3 SDK expects — against the OpenAI
-    provider_api URL the example would 503) and meta.channels to the converse
-    channel. Gated with the channel/interface: no native id -> no examples. #}
-{%- if converse_model_id %}
-    "Python code example (boto3 Converse)": {
-      "$doc_preset": "llm_code_example_bedrock_converse",
-      "meta": {"channels": ["converse"], "interfaces": ["converse_api"], "sleep_after_test": 5}
-    },
-    "Python code example (boto3 InvokeModel)": {
-      "$doc_preset": "llm_code_example_bedrock_invoke",
-      "meta": {"channels": ["converse"], "interfaces": ["converse_api"]}
-    },
-{%- endif %}
-    "Connectivity test": {
-      "$doc_preset": "llm_connectivity", "meta": {"channels": ["byok"], "interfaces": ["provider_api"], "sleep_after_test": 5}
-    },
-    "Default request body": {
-      "$doc_preset": "llm_request_template"
+    "$llm_example_collection": {
+      "capabilities": ["chat"],
+      "upstream_dialect": "openai",
+      "formats": [
+        {
+          "formats": ["openai", "anthropic"],
+          "channel": "byok",
+          "interface": "provider_api",
+          "primary": true,
+          {#- Only models that accept the OpenAI `tools` param get the
+              function-calling example; others 400/500 on it (probed by
+              update_params.py -> supports_tools). -#}
+          "tools": {{ (supports_tools | default(false)) | tojson }}
+        }{% if converse_model_id %},
+        {
+          "formats": ["bedrock_converse", "bedrock_invoke"],
+          "channel": "converse",
+          "interface": "converse_api"
+        }{% endif %}
+      ],
+      "sleep": 5
     }
   }
 }
