@@ -4,6 +4,21 @@
   "homepage": "https://aws.amazon.com/bedrock/",
   "logo": "https://www.drupal.org/files/project-images/bedrock-logo.jpg",
   "name": "bedrock",
+  "rate_limits": [
+    {
+      "description": "Self-imposed ceiling so platform test sweeps cannot saturate the account; not a published provider limit.",
+      "limit": 10,
+      "name": "bedrock_concurrency",
+      "unit": "concurrent"
+    },
+    {
+      "description": "Self-imposed ceiling so platform test sweeps cannot saturate the account; not a published provider limit.",
+      "limit": 100,
+      "name": "bedrock_rpm",
+      "unit": "requests",
+      "window": "minute"
+    }
+  ],
   "status": "ready",
   "terms_of_service": "https://aws.amazon.com/service-terms/",
   "time_created": "2026-08-13T00:00:00Z"
