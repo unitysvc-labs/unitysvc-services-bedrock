@@ -43,10 +43,24 @@
     and answers in generated text — safety is what you use it FOR, not a
     different contract. (Contrast Groq's llama-prompt-guard, which rejects a
     normal chat request outright and is therefore `moderate`.) -#}
-  "capabilities": ["chat"],
+{%- set _caps = ["chat"] -%}
+  "capabilities": {{ _caps | tojson }},
   "status": "{{ status | default('ready') }}",
   "currency": "USD",
-  "tags": ["ai", "gateway", "byok"],
+{#- Closed tag vocabulary (unitysvc/unitysvc#1962): ingest now rejects any tag
+    outside docs/tags.yml, and the legacy trio (ai / gateway / byok) is gone
+    — each one restated a field the platform already derives (service_type,
+    gateway_type, the enrolment channel). `feature:func-call` is the only tag a
+    seller may declare. It rides the SAME signal that gates the function-calling
+    branch of the code examples: `supports_tools`, which update_params.py sets
+    from a LIVE probe — a real Chat Completions call carrying a `tools` array,
+    so the flag records what the model actually accepted, not what a metadata
+    table claims. Read off _caps rather than assumed, so a future non-chat model
+    in this catalog cannot inherit a tools claim it has no surface for; defaults
+    to false so an unknown signal never becomes a customer-facing promise. -#}
+{%- if "chat" in _caps and supports_tools | default(false) %}
+  "tags": ["feature:func-call"],
+{%- endif %}
   "details": {{ dict(details or {}, input_formats=["openai", "anthropic"], output_formats=["openai_response", "anthropic_response"]) | tojson }},
 {%- if payout_price %}
   "payout_price": {{ payout_price | tojson }},
