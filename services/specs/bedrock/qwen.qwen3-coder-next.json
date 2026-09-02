@@ -6,6 +6,7 @@
     "details": {
       "context_length": null,
       "data_retention_modes": [
+        "aws_review",
         "default",
         "none",
         "provider_data_share"
