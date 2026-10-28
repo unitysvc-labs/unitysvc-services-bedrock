@@ -77,7 +77,6 @@
       "applicable_interfaces": ["provider_api"],
       "base_url": "{{ api_base_url }}",
       "api_key": "${ customer_secrets.{{ env_api_key_name }} }",
-      "rate_limits": [],
       "routing_key": {"model": "{{ offering_name }}"},
       "request_transformer": {
         "llm_translator": "anthropic_to_openai"
@@ -117,7 +116,6 @@
       "region": "us-east-1",
       "sigv4_service": "bedrock",
       "description": "Native Bedrock runtime (Converse / InvokeModel, including the streaming variants), signed upstream with your AWS IAM access keys (SigV4). Point boto3 at the gateway: endpoint_url is this service's URL up to (excluding) /model/, and the SDK appends /model/{modelId}/... itself.",
-      "rate_limits": [],
       "request_formats": ["bedrock_converse", "bedrock_invoke"],
       "sort_order": 2
     }
